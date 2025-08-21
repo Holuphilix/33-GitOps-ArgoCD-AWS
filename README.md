@@ -412,10 +412,37 @@ git commit -m "Initial commit: Add project structure and sample application mani
 #### **4. Add Remote Repository**
 
 ```bash
-git remote add origin https://github.com/<YOUR_GITHUB_USERNAME>/gitops-argocd-aws.git
+git remote add origin https://github.com/Holuphilix/gitops-argocd-aws.git
 ```
 
-#### **5. Push to GitHub**
+#### **5. Create a file named `.gitignore` in your root and add:**
+
+
+```gitignore
+# OS files
+*.DS_Store
+desktop.ini
+
+# IDE / editor
+.vscode/
+*.code-workspace
+.idea/
+
+# Node / Python / other builds
+node_modules/
+__pycache__/
+
+# Local env files
+.env
+
+# Large or personal files
+*.iso
+*.exe
+*.pdf
+*.docx
+```
+
+#### **6. Push to GitHub**
 
 ```bash
 git branch -M main
@@ -423,7 +450,7 @@ git push -u origin main
 ```
 
 **Screenshot Example:** GitHub push
-![GitHub Push](./images/13.github_push.png)
+![GitHub Push](./images/12.github_push.png)
 
 ### **Step 4: Create an ArgoCD Application**
 
@@ -440,7 +467,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: 'https://github.com/<YOUR_GITHUB_USERNAME>/gitops-argocd-aws.git'
+    repoURL: 'https://github.com/Holuphilix/gitops-argocd-aws.git'
     targetRevision: main
     path: manifests/app
   destination:
@@ -476,9 +503,9 @@ kubectl get deployments
 kubectl get svc
 ```
 
-**Screenshot Example:** Application deployed successfully
+**Screenshot:** Application deployed successfully
 
-![ArgoCD Application](./images/11.argocd_app_nginx.png)
+![ArgoCD Application](./images/13.argocd_app_list_ngnix.png)
 
 ### **Step 7: Access the Sample Application**
 
@@ -495,6 +522,125 @@ You should see the default Nginx welcome page.
 
 **Screenshot:** Nginx Application
 
-![Nginx Application](./images/12.nginx_localhost.png)
+![Nginx Application](./images/14.nginx_localhost.png.png)
 
 ✅ **Task 3 Completed** – A sample Nginx application is now deployed and accessible using ArgoCD on EKS. The project has been pushed to GitHub, enabling full GitOps workflow.
+
+
+## **Task 4: Updating and Synchronizing the Application Using ArgoCD**
+
+This task demonstrates how to update an application in Git and let ArgoCD automatically synchronize those changes to your EKS cluster, showcasing the GitOps workflow in action.
+
+### **Step 1: Update the Application Manifest in Git**
+
+We will update the Nginx deployment to use **3 replicas** instead of 2.
+
+#### Edit `manifests/app/nginx-deployment.yaml`
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-deployment
+  labels:
+    app: nginx
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:stable
+        ports:
+        - containerPort: 80
+```
+
+### **Step 2: Push the Update to GitHub**
+
+#### **1. Stage any Changes made**
+
+```bash
+git add .
+```
+
+#### **2. Commit the Changes**
+
+```bash
+git commit -m "Update Nginx deployment to 3 replicas"
+```
+
+#### **3. Push to GitHub**
+
+```bash
+git push origin main
+```
+
+**Screenshot:** GitHub commit & push
+![GitHub commit push](./images/14.github_push_update.png)
+
+---
+
+### **Step 3: Synchronize Changes in ArgoCD**
+
+ArgoCD automatically detects changes in the Git repository.
+
+#### **Option 1: Automatic Sync (if enabled)**
+
+If `automated` sync policy is enabled (from Task 3):
+
+```powershell
+# ArgoCD will automatically sync, check status:
+argocd app get nginx-app
+```
+
+You should see `Synced` and `Healthy` status.
+
+#### **Option 2: Manual Sync**
+
+If automatic sync is not enabled:
+
+```powershell
+argocd app sync nginx-app
+```
+
+**Screenshot:** ArgoCD sync
+![ArgoCD Sync](./images/15.argocd_sync.png)
+
+---
+
+### **Step 4: Verify the Deployment Update**
+
+Check Kubernetes resources:
+
+```powershell
+kubectl get deployments
+kubectl get pods
+```
+
+You should see **3 replicas of Nginx running**.
+
+**Screenshot:** kubectl get deployments
+![kubectl deployment updated](./images/16.kubectl_deployment_update.png)
+
+---
+
+### **Step 5: Demonstrate Self-Healing (Optional)**
+
+1. Delete a pod manually:
+
+```powershell
+kubectl delete pod <nginx-pod-name>
+```
+
+2. ArgoCD automatically recreates the pod to match the desired state from Git.
+
+**Screenshot:** Pod recreated
+![ArgoCD self-heal](./images/17.argocd_self_heal.png)
+
+✅ **Task 4 Completed** – The Nginx deployment has been updated via Git, ArgoCD synchronized the changes automatically, and self-healing ensures the cluster matches the desired state.

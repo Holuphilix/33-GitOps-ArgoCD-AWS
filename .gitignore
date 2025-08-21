@@ -1,0 +1,21 @@
+# OS files
+*.DS_Store
+desktop.ini
+
+# IDE / editor
+.vscode/
+*.code-workspace
+.idea/
+
+# Node / Python / other builds
+node_modules/
+__pycache__/
+
+# Local env files
+.env
+
+# Large or personal files
+*.iso
+*.exe
+*.pdf
+*.docx
