@@ -1,4 +1,3 @@
-
 # **Introduction to GitOps and ArgoCD using AWS**
 
 ## **Project Overview**
@@ -70,8 +69,6 @@ This project equips learners with essential **DevOps and cloud-native skills** t
 * **Git Repository** (source of truth for deployments).
 * **Sample Application** (to demonstrate synchronization).
 * **Documentation (README.md)**.
-
-Perfect 👍 I see what you mean — you want **Task numbering (`##`)** and **Step numbering (`###`)** to be consistent across both Task 1 and Task 2. Let me align and restructure everything cleanly for you:
 
 ## **Task 1: Project Directory and Structure**
 
@@ -228,7 +225,7 @@ kubectl get pods -n argocd
 
 ### **Step 5: Access ArgoCD UI**
 
-#### Option 1: Port Forward (local access)
+#### 1. Port Forward (local access)
 
 ```powershell
 kubectl port-forward svc/argocd-server -n argocd 8080:443
@@ -242,7 +239,7 @@ Open in browser: 👉 [https://localhost:8080](https://localhost:8080)
 **Screenshot:** Localhost
 ![Localhost](./images/6.localhost.png)
 
-#### Option 2: Expose via LoadBalancer (cloud access)
+#### 2: Expose via LoadBalancer (cloud access)
 
 Create `manifests/argocd/argocd-server-lb.yaml`:
 
@@ -582,9 +579,7 @@ git push origin main
 ```
 
 **Screenshot:** GitHub commit & push
-![GitHub commit push](./images/14.github_push_update.png)
-
----
+![GitHub commit push](./images/15.github_push_update.png.png)
 
 ### **Step 3: Synchronize Changes in ArgoCD**
 
@@ -601,18 +596,8 @@ argocd app get nginx-app
 
 You should see `Synced` and `Healthy` status.
 
-#### **Option 2: Manual Sync**
-
-If automatic sync is not enabled:
-
-```powershell
-argocd app sync nginx-app
-```
-
 **Screenshot:** ArgoCD sync
-![ArgoCD Sync](./images/15.argocd_sync.png)
-
----
+![ArgoCD Sync](./images/16.argocd_sync.png.png)
 
 ### **Step 4: Verify the Deployment Update**
 
@@ -626,21 +611,200 @@ kubectl get pods
 You should see **3 replicas of Nginx running**.
 
 **Screenshot:** kubectl get deployments
-![kubectl deployment updated](./images/16.kubectl_deployment_update.png)
+![kubectl deployment updated](./images/17.kubectl_deployment_update.png)
 
----
-
-### **Step 5: Demonstrate Self-Healing (Optional)**
+### **Step 5: Demonstrate Self-Healing**
 
 1. Delete a pod manually:
 
 ```powershell
-kubectl delete pod <nginx-pod-name>
+kubectl delete pod nginx-deployment-5654587fb9-rlllz -n default
 ```
 
 2. ArgoCD automatically recreates the pod to match the desired state from Git.
 
 **Screenshot:** Pod recreated
-![ArgoCD self-heal](./images/17.argocd_self_heal.png)
+![ArgoCD self-heal](./images/18.argocd_self_heal.png)
 
 ✅ **Task 4 Completed** – The Nginx deployment has been updated via Git, ArgoCD synchronized the changes automatically, and self-healing ensures the cluster matches the desired state.
+
+## **Task 5: Monitor Synchronization in ArgoCD (UI & CLI)**
+
+This task focuses on observing how ArgoCD tracks and reconciles the **desired state (Git)** with the **live state (cluster)**, using both the **ArgoCD UI** and **CLI**.
+
+### **Step 1: Verify Application Presence & Status (CLI)**
+
+```bash
+argocd app list
+argocd app get nginx-app
+```
+
+Confirm:
+
+* **SYNC STATUS:** `Synced`
+* **HEALTH:** `Healthy`
+* **SOURCE:** your Git repo path `manifests/app` on branch `main`
+* **DESTINATION:** `https://kubernetes.default.svc` in namespace `default`
+
+**Screenshot:** Application Presence & Status (CLI)
+![Application Presence & Status (CLI)](./images/20.argocd_app_get_cli.png.png)
+
+### **Step 2: Inspect in the ArgoCD UI**
+
+1. Open the ArgoCD UI (LoadBalancer URL or port-forward from Task 2).
+2. Navigate to **Applications → nginx-app**.
+3. Review:
+
+   * **Overview:** Sync status (`Synced/OutOfSync`), Health (`Healthy/Degraded`).
+   * **Resources Graph:** Deployment and Service with real-time health.
+   * **Activity/History:** Previous syncs and Git revisions.
+
+**Screenshot:** ArgoCD UI App Synced
+![ArgoCD UI Display](./images/19.argocd_ui_app_synced.png.png)
+
+### **Step 3: Check Sync History & Differences (CLI)**
+
+```bash
+# Show revision history for nginx-app
+argocd app history nginx-app
+
+# Show what would change (if any) without modifying the cluster
+argocd app diff nginx-app
+```
+
+**Screenshot:** Check Sync History
+![Check Sync History](./images/21.argocd_app_history.png.png)
+
+Use these to understand what ArgoCD is comparing between Git and the cluster.
+
+### **Step 4: Observe Reconciliation Logs**
+
+This helps you **watch the controller reconciling** state (useful for learning/visibility):
+
+```bash
+# Application Controller (reconciliation loop)
+kubectl logs -n argocd statefulset/argocd-application-controller -f
+```
+
+### **Step 5: Update README & Add Screenshots**
+
+Document what you observed:
+
+* Current **Sync** and **Health** states.
+* A snippet of **`argocd app get nginx-app`** output.
+* A brief note on **History** and **Diff**.
+* Screenshots saved to `images/`:, 
+
+  * `images/19.argocd_ui_app_synced.png`
+  * `images/20.argocd_app_get_cli.png`
+  * `images/21.argocd_app_history.png`
+
+### **Project Directory Structure (after Task 5)**
+
+```bash
+gitops-argocd-aws/
+├── README.md
+├── manifests/
+│   ├── app/
+│   │   ├── nginx-deployment.yaml
+│   │   └── nginx-service.yaml
+│   └── argocd/
+│       ├── nginx-app.yaml
+│       └── argocd-server-lb.yaml
+└── images/
+    ├── 1.aws_configure.png
+    ├── 2.kubectl_get_nodes.png
+    ├── 3.kubectl_create_namespace_argocd.png
+    ├── 4.kubectl_get_pods_n_argocd.png
+    ├── 5.kubectl_port-forward_svc_argocd.png
+    ├── 6.localhost.png
+    ├── 7.kubectl_apply_manifests.png
+    ├── 9.kubectl_get_svc_argocd.png
+    ├── 10.argocd_password.png
+    ├── 11.argocd_app_nginx.png
+    ├── 12.nginx_localhost.png
+    ├── 13.argocd_app_list_nginx.png
+    ├── 14.nginx_localhost.png
+    ├── 15.github_push_update.png
+    ├── 16.argocd_sync.png
+    ├── 17.kubectl_deployment_update.png
+    ├── 18.argocd_self_heal.png
+    ├── 19.argocd_ui_app_synced.png
+    ├── 20.argocd_app_get_cli.png
+    └── 21.argocd_app_history.png
+```
+
+✅ **Task 5 Completed** — You verified and monitored synchronization using both the ArgoCD UI and CLI.
+
+## **Task 6: Cleanup**
+
+This task will remove all Kubernetes resources and the EKS cluster created for this project.
+
+### **Step 1: Delete the ArgoCD Application**
+
+```bash
+kubectl delete -f manifests/argocd/nginx-app.yaml
+```
+
+**Explanation:** This deletes the Nginx ArgoCD Application and stops ArgoCD from managing the resources.
+
+### **Step 2: Delete Sample Application Resources**
+
+```bash
+kubectl delete -f manifests/app/nginx-deployment.yaml
+kubectl delete -f manifests/app/nginx-service.yaml
+```
+
+**Explanation:** Removes the Nginx deployment and service from the cluster.
+
+### **Step 3: Delete ArgoCD Namespace**
+
+```bash
+kubectl delete namespace argocd
+```
+
+**Explanation:** Deletes all ArgoCD components and namespace from the cluster.
+
+### **Step 4: Delete the EKS Cluster**
+
+```bash
+eksctl delete cluster --name gitops-eks-cluster --region us-east-1
+```
+
+**Explanation:** This command deletes the entire EKS cluster along with all nodes and resources managed by it. ⚠️ Replace `--name` and `--region` with your cluster’s actual name and AWS region.
+
+### **Step 5: Final Push to GitHub**
+
+Even after cleanup, ensure your project repo contains the latest documentation:
+
+```bash
+git add .
+git commit -m "Add Task 6 cleanup steps and finalize README"
+git push origin main
+```
+
+**Explanation:** This ensures the README.md reflects the full project workflow, including cleanup.
+
+## **Conclusion**
+
+Congratulations! 🎉
+
+You have successfully:
+
+* Set up an Amazon EKS cluster.
+* Installed and configured ArgoCD for GitOps workflows.
+* Deployed and updated a sample application using ArgoCD.
+* Observed automatic synchronization and self-healing.
+* Cleaned up all resources to avoid unnecessary AWS charges.
+
+This project demonstrates **full GitOps workflow** using ArgoCD on AWS and provides a foundation for managing cloud-native applications efficiently.
+
+## **Author**
+
+### **Philip Oluwaseyi Oludolamu**
+
+**Email: [oluphilix@gmail.com](mailto:oluphilix@gmail.com)**
+
+**GitHub: [github.com/Holuphilix](https://github.com/Holuphilix)**
+
+**LinkedIn: [linkedin.com/in/philipoludolamu](https://linkedin.com/in/philipoludolamu)**
