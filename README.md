@@ -1,4 +1,4 @@
-# **Introduction to GitOps and ArgoCD using AWS**
+# **Mini Project: Introduction to GitOps and ArgoCD using AWS**
 
 ## **Project Overview**
 
